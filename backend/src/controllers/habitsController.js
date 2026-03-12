@@ -1,4 +1,6 @@
-export const createHabit = () => {}
+export const createHabit = async (req, res) => {
+
+}
 
 export const getAllHabits = () => {}
 
