@@ -1,5 +1,5 @@
 import express from "express"
-import { createHabit, deleteHabit, getAllHabits, markComplete } from "../controllers/habitsController"
+import { createHabit, deleteHabit, getAllHabits, markComplete } from "../controllers/habitsController.js"
 
 const router = express.Router()
 
