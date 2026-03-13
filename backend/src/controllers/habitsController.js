@@ -5,9 +5,9 @@ import Habit from "../models/Habit.js"
 export const getAllHabits = async (req, res) => {
   try {
     const habits = await Habit.find().sort({ createdAt: -1 })
-    res.json(habits)
+    res.status(200).json(habits)
   } catch (error) {
-    res.status(500).json({ message: "Server error!!" })
+    res.status(500).json({message: "SERVER ERROR!!"})
   }
 }
 
@@ -15,18 +15,12 @@ export const getAllHabits = async (req, res) => {
 export const createHabit = async (req, res) => {
   try {
     const { title, description, frequency } = req.body
+    const newHabit = new Habit({ title, description, frequency })
+    await newHabit.save()  
 
-    const habit = new Habit({
-      title,
-      description,
-      frequency
-    })
-
-    await habit.save()
-
-    res.status(201).json(habit)
+    res.status(201).json(newHabit)
   } catch (error) {
-    res.status(500).json({ message: "Server error!!" })
+    res.status(500).json({message: "SERVER ERROR!!"})    
   }
 }
 
@@ -37,52 +31,110 @@ export const markComplete = async (req, res) => {
 
     if (!habit) {
       return res.status(404).json({ message: "Habit not found" })
-    }
-
-    const today = new Date()
-    today.setHours(0,0,0,0)
+    }    
     
-    let alreadyCompleted = false
-
+    let completion = false
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    
     if (habit.frequency === "daily") {
-      alreadyCompleted = habit.completedDates.some(date => {
+      completion = habit.completedDates.some(date => {
         const d = new Date(date)
-        d.setHours(0,0,0,0)
+        d.setHours(0, 0, 0, 0)
         return d.getTime() === today.getTime()
       })
     }
-
     if (habit.frequency === "weekly") {
-      alreadyCompleted = habit.completedDates.some(date => {
-        const diff = today - new Date(date)
-        const days = diff / (1000 * 60 * 60 * 24)
-        return days < 7
-      })
+      completion = habit.completedDates.some(date => {
+        const d = new Date(date)
+        d.setHours(0, 0, 0, 0)
+        const diff = today.getTime() - d.getTime()
+        return diff < 7*24*60*60*1000
+      })  
     }
 
-    if (!alreadyCompleted) {
+    if (!completion) {
       habit.completedDates.push(today)
       await habit.save()
     }
 
     res.json(habit)
-
+    
   } catch (error) {
-    res.status(500).json({ message: "Server error!!" })
+    res.status(500).json({message: "SERVER ERROR!!"})      
   }
 }
 
 // Deletes a habit from the database using its ID.
 export const deleteHabit = async (req, res) => {
   try {
-    const habit = await Habit.findByIdAndDelete(req.params.id)
+    const deleted = await Habit.findByIdAndDelete(req.params.id)    
 
-    if (!habit) {
+    if (!deleted) {
       return res.status(404).json({ message: "Habit not found" })
     }
 
-    res.json({ message: "Habit deleted" })
+    res.json({ message: "Habit deleted successfully" })  
+    
   } catch (error) {
-    res.status(500).json({ message: "Server error!!" })
+    res.status(500).json({message: "SERVER ERROR!!"})    
+  }
+}
+
+export const updateHabit = async (req, res) => {
+  try {
+    const { title, description } = req.body
+
+    const updatedHabit = await Habit.findByIdAndUpdate(req.params.id, {
+      title,
+      description
+    }, {
+      new: true
+    }) 
+
+    if (!updatedHabit) {
+      return res.status(404).json({ message: "Habit not found" })
+    }
+
+    res.json(updatedHabit)
+  } catch (error) {
+    res.status(500).json({message: "SERVER ERROR!!"})      
+  }
+}
+
+export const getStats = async (req, res) => {
+  try {
+    const habits = await Habit.find()
+    const totalHabits = habits.length
+
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+
+    let completed = 0
+
+    habits.forEach(habit => {
+      if (habit.frequency === "daily") {
+        habit.completedDates.forEach(date => {
+          const d = new Date(date)
+          d.setHours(0, 0, 0, 0)
+          if (d.getTime() === today.getTime()) completed++
+        })
+      }
+      if (habit.frequency === "weekly") {
+        habit.completedDates.forEach(date => {
+          const d = new Date(date)
+          d.setHours(0, 0, 0, 0)
+          const diff = today.getTime() - d.getTime() 
+          if (diff < 7*24*60*60*1000) completed++
+        })
+      }
+    });
+
+    res.status(200).json({
+      totalHabits,
+      completedHabits: completed
+    })
+  } catch (error) {
+    res.status(500).json({ message: "SERVER ERROR!!" })    
   }
 }
