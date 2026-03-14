@@ -5,8 +5,9 @@ export default function Home() {
     const [stats, setStats] = useState({ totalHabits: 0, completedHabits: 0 })
 
     function loadData() {
-        fetch("http://localhost:3001/api/habits").then(r => r.json()).then(setHabits)
-        fetch("http://localhost:3001/api/habits/stats").then(res => res.json()).then(data => setStats(data))
+        const apiUrl = import.meta.env.VITE_BACKEND_URI || "http://localhost:5001";
+        fetch(`${apiUrl}/api/habits`).then(r => r.json()).then(setHabits)
+        fetch(`${apiUrl}/api/habits/stats`).then(res => res.json()).then(data => setStats(data))
     }
 
     useEffect(() => {
@@ -14,12 +15,14 @@ export default function Home() {
     }, [])
 
     const markDone = async (id) => {
-        await fetch(`http://localhost:3001/api/habits/${id}/complete`, { method: "POST" })
+        const apiUrl = import.meta.env.VITE_BACKEND_URI || "http://localhost:5001";
+        await fetch(`${apiUrl}/api/habits/${id}/complete`, { method: "POST" })
         loadData()
     }
 
     const deleteHabit = async (id) => {
-        await fetch(`http://localhost:3001/api/habits/${id}`, { method: "DELETE" })
+        const apiUrl = import.meta.env.VITE_BACKEND_URI || "http://localhost:5001";
+        await fetch(`${apiUrl}/api/habits/${id}`, { method: "DELETE" })
         loadData()
     }
 

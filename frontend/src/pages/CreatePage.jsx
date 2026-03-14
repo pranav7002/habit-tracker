@@ -11,7 +11,8 @@ const Create = () => {
         e.preventDefault()
         if (!title) return
 
-        await fetch("http://localhost:3001/api/habits", {
+        const apiUrl = import.meta.env.VITE_BACKEND_URI || "http://localhost:5001";
+        await fetch(`${apiUrl}/api/habits`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ title, description: desc, frequency: freq })
